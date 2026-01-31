@@ -48,18 +48,45 @@ function createAudioCard(audio, index) {
     card.className = 'audio-card';
     card.style.animationDelay = `${index * 0.05}s`;
     
-    card.innerHTML = `
-        <div class="card-header">
-            <div class="audio-icon">${audio.icon}</div>
-            <div class="card-info">
-                <div class="audio-number">${audio.number}</div>
-                <h3 class="audio-title">${audio.title}</h3>
-                <div class="audio-category">${audio.categoryName}</div>
-            </div>
-        </div>
-        <span class="card-duration">⏱️ ${audio.duration}</span>
-    `;
+    // Créer la structure de la carte
+    const cardHeader = document.createElement('div');
+    cardHeader.className = 'card-header';
     
+    const audioIcon = document.createElement('div');
+    audioIcon.className = 'audio-icon';
+    audioIcon.textContent = audio.icon;
+    
+    const cardInfo = document.createElement('div');
+    cardInfo.className = 'card-info';
+    
+    const audioNumber = document.createElement('div');
+    audioNumber.className = 'audio-number';
+    audioNumber.textContent = audio.number;
+    
+    const audioTitle = document.createElement('h3');
+    audioTitle.className = 'audio-title';
+    audioTitle.textContent = audio.title;
+    
+    const audioCategory = document.createElement('div');
+    audioCategory.className = 'audio-category';
+    audioCategory.textContent = audio.categoryName;
+    
+    const cardDuration = document.createElement('span');
+    cardDuration.className = 'card-duration';
+    cardDuration.innerHTML = `⏱️ ${audio.duration}`;
+    
+    // Assembler la carte
+    cardInfo.appendChild(audioNumber);
+    cardInfo.appendChild(audioTitle);
+    cardInfo.appendChild(audioCategory);
+    
+    cardHeader.appendChild(audioIcon);
+    cardHeader.appendChild(cardInfo);
+    
+    card.appendChild(cardHeader);
+    card.appendChild(cardDuration);
+    
+    // Événement de clic
     card.addEventListener('click', () => openPlayer(audio));
     
     return card;
@@ -102,8 +129,8 @@ function openPlayer(audioData) {
     audioPlayer.src = audioData.audioFile;
     audioPlayer.load();
     
-    // Afficher la modal
-    modal.classList.add('show');
+    // Afficher la modal (utiliser 'active' au lieu de 'show')
+    modal.classList.add('active');
     
     // Sauvegarder le dernier audio écouté
     saveLastPlayedAudio(audioData.id);
@@ -114,7 +141,7 @@ function openPlayer(audioData) {
 
 function closePlayer() {
     const modal = document.getElementById('playerModal');
-    modal.classList.remove('show');
+    modal.classList.remove('active');
     
     // Arrêter la lecture
     audioPlayer.pause();
@@ -127,10 +154,6 @@ function closePlayer() {
 
 function resetPlayerControls() {
     // Réinitialiser la vitesse à normale
-    const speedButtons = document.querySelectorAll('.speed-btn');
-    speedButtons.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.speed === '1');
-    });
     audioPlayer.playbackRate = 1;
     
     // Réinitialiser la boucle
@@ -154,11 +177,6 @@ function setupEventListeners() {
     
     // Bouton Play/Pause
     document.getElementById('playPauseBtn').addEventListener('click', togglePlay);
-    
-    // Boutons de vitesse
-    document.querySelectorAll('.speed-btn').forEach(btn => {
-        btn.addEventListener('click', () => changeSpeed(btn));
-    });
     
     // Boutons de navigation
     document.getElementById('seekBackward').addEventListener('click', () => seek(-10));
@@ -187,7 +205,12 @@ function setupEventListeners() {
     // Gestion des erreurs audio
     audioPlayer.addEventListener('error', (e) => {
         console.error('Erreur de chargement audio:', e);
-        alert('Erreur : Impossible de charger cet audio. Vérifiez que le fichier existe dans le dossier "audios/".');
+        alert('❌ Erreur : Impossible de charger cet audio.\n\nVérifiez que le fichier existe dans le dossier "audios/".\n\nFichier demandé : ' + audioPlayer.src);
+    });
+    
+    // Événement de chargement réussi
+    audioPlayer.addEventListener('canplaythrough', () => {
+        console.log('✅ Audio chargé avec succès:', audioPlayer.src);
     });
     
     // Raccourcis clavier
@@ -196,9 +219,20 @@ function setupEventListeners() {
 
 function togglePlay() {
     if (audioPlayer.paused) {
-        audioPlayer.play();
-        updatePlayButton(true);
-        updateWaveform(true);
+        const playPromise = audioPlayer.play();
+        
+        if (playPromise !== undefined) {
+            playPromise
+                .then(() => {
+                    console.log('🎵 Lecture démarrée');
+                    updatePlayButton(true);
+                    updateWaveform(true);
+                })
+                .catch((error) => {
+                    console.error('❌ Erreur de lecture:', error);
+                    alert('Impossible de lire l\'audio. Vérifiez que le fichier existe.');
+                });
+        }
     } else {
         audioPlayer.pause();
         updatePlayButton(false);
@@ -219,18 +253,6 @@ function updateWaveform(isPlaying) {
     } else {
         waveform.classList.remove('playing');
     }
-}
-
-function changeSpeed(btn) {
-    // Retirer la classe active de tous les boutons
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
-    
-    // Ajouter la classe active au bouton cliqué
-    btn.classList.add('active');
-    
-    // Changer la vitesse de lecture
-    const speed = parseFloat(btn.dataset.speed);
-    audioPlayer.playbackRate = speed;
 }
 
 function seek(seconds) {
@@ -311,7 +333,7 @@ function formatTime(seconds) {
 // ========================================
 function handleKeyboard(e) {
     const modal = document.getElementById('playerModal');
-    if (!modal.classList.contains('show')) return;
+    if (!modal.classList.contains('active')) return;
     
     switch(e.key) {
         case ' ':
@@ -343,7 +365,7 @@ function loadLastPlayedAudio() {
     const lastAudioId = localStorage.getItem('lastPlayedAudio');
     if (lastAudioId) {
         // Vous pouvez ajouter un indicateur visuel sur la dernière carte écoutée
-        // ou proposer de reprendre là où l'utilisateur s'est arrêté
+        console.log('Dernier audio écouté:', lastAudioId);
     }
 }
 
@@ -352,18 +374,13 @@ function loadLastPlayedAudio() {
 // ========================================
 function checkOnlineStatus() {
     const indicator = document.getElementById('offlineIndicator');
-    const statusDot = indicator.querySelector('.status-dot');
     
     function updateStatus() {
-        if (navigator.onLine) {
-            indicator.innerHTML = '<span class="status-dot online"></span> Connecté';
-            statusDot.classList.remove('offline');
-            statusDot.classList.add('online');
-        } else {
-            indicator.innerHTML = '<span class="status-dot offline"></span> Hors ligne';
-            statusDot.classList.remove('online');
-            statusDot.classList.add('offline');
-        }
+        const statusHTML = navigator.onLine 
+            ? '<span class="status-dot online"></span> Connecté'
+            : '<span class="status-dot offline"></span> Hors ligne';
+        
+        indicator.innerHTML = statusHTML;
     }
     
     updateStatus();
@@ -384,7 +401,6 @@ function setupInstallPrompt() {
     
     // Vérifier si l'app est déjà installée
     if (window.matchMedia('(display-mode: standalone)').matches) {
-        // L'app est déjà installée, ne pas afficher le prompt
         return;
     }
     
@@ -400,7 +416,7 @@ function setupInstallPrompt() {
         
         // Afficher le prompt après 3 secondes
         setTimeout(() => {
-            installPrompt.classList.add('show');
+            installPrompt.classList.add('active');
         }, 3000);
     });
     
@@ -416,16 +432,16 @@ function setupInstallPrompt() {
         const { outcome } = await deferredPrompt.userChoice;
         
         if (outcome === 'accepted') {
-            console.log('L\'utilisateur a accepté l\'installation');
+            console.log('✅ L\'utilisateur a accepté l\'installation');
         }
         
         deferredPrompt = null;
-        installPrompt.classList.remove('show');
+        installPrompt.classList.remove('active');
     });
     
     // Bouton ignorer
     skipButton.addEventListener('click', () => {
-        installPrompt.classList.remove('show');
+        installPrompt.classList.remove('active');
         localStorage.setItem('installPromptDismissed', 'true');
     });
 }
@@ -434,14 +450,8 @@ function setupInstallPrompt() {
 // DÉTECTION D'INSTALLATION
 // ========================================
 window.addEventListener('appinstalled', () => {
-    console.log('Application installée avec succès!');
-    // Vous pouvez afficher une notification de succès ici
+    console.log('✅ Application installée avec succès!');
 });
-
-// ========================================
-// GESTION DES ERREURS AUDIO
-// ========================================
-// Déplacé dans setupEventListeners() pour éviter l'erreur null
 
 // ========================================
 // EXPORT POUR DEBUG
@@ -451,7 +461,8 @@ window.debugApp = {
     currentAudioData,
     audioData,
     openPlayer,
-    closePlayer
+    closePlayer,
+    togglePlay
 };
 
 console.log('🎓 English Kids App initialisée avec succès!');
