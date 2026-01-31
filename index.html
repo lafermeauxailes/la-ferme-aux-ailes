@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4CAF50">
+    <meta name="description" content="Application d'accompagnement pour l'élevage de poules pondeuses">
+    <title>La Ferme aux Ailes - Guide Audio</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Écran d'installation -->
+    <div id="installPrompt" class="install-overlay">
+        <div class="install-card">
+            <div class="install-icon">🐔</div>
+            <h2>Bienvenue dans La Ferme aux Ailes!</h2>
+            <p>Installez cette application pour un accès hors ligne à tous les audios de formation.</p>
+            <button id="installButton" class="btn-primary">Installer l'Application</button>
+            <button id="skipInstall" class="btn-secondary">Plus tard</button>
+        </div>
+    </div>
+
+    <!-- En-tête -->
+    <header class="app-header">
+        <div class="header-content">
+            <div class="logo">
+                <span class="logo-icon">🐔</span>
+                <span class="logo-text">La Ferme aux Ailes</span>
+            </div>
+            <div class="header-subtitle">12 Audios pour Maîtriser l'Élevage de Poules Pondeuses</div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="category-nav">
+        <button class="category-btn active" data-category="all">
+            <span class="category-icon">📚</span>
+            Tous
+        </button>
+        <button class="category-btn" data-category="partie1">
+            <span class="category-icon">🎯</span>
+            Premiers Pas
+        </button>
+        <button class="category-btn" data-category="partie2">
+            <span class="category-icon">🏗️</span>
+            Bâtiment
+        </button>
+        <button class="category-btn" data-category="partie3">
+            <span class="category-icon">🌾</span>
+            Alimentation
+        </button>
+        <button class="category-btn" data-category="partie4">
+            <span class="category-icon">💉</span>
+            Prophylaxie
+        </button>
+    </nav>
+
+    <!-- Liste des audios -->
+    <main class="audio-list" id="audioList"></main>
+
+    <!-- Modal lecteur -->
+    <div id="playerModal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" id="closeModal">✕</button>
+            
+            <div class="player-header">
+                <div class="audio-number" id="playerNumber">Audio 01</div>
+                <h2 class="audio-title" id="playerTitle">Titre de l'audio</h2>
+            </div>
+
+            <div class="audio-visual">
+                <div class="waveform" id="waveform">
+                    <span></span><span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+
+            <!-- Vitesse normale uniquement (pas de contrôle) -->
+
+            <div class="playback-controls">
+                <button class="control-btn" id="seekBackward">⏪ 10s</button>
+                <button class="play-btn" id="playPauseBtn">
+                    <span class="play-icon">▶️</span>
+                </button>
+                <button class="control-btn" id="seekForward">10s ⏩</button>
+            </div>
+
+            <div class="progress-container">
+                <div class="time-display">
+                    <span id="currentTime">0:00</span>
+                    <span id="duration">0:00</span>
+                </div>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                    <div class="progress-handle" id="progressHandle"></div>
+                </div>
+            </div>
+
+            <div class="loop-control">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="loopToggle">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="loop-label">🔁 Lecture en boucle</span>
+            </div>
+
+            <div class="advice-box" id="adviceBox">
+                <div class="advice-icon">💡</div>
+                <div class="advice-text" id="adviceText">
+                    Conseil d'utilisation de cet audio
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio element -->
+    <audio id="audioPlayer"></audio>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>🐔 La Ferme aux Ailes - Guide Pratique d'Élevage</p>
+        <p class="offline-indicator" id="offlineIndicator">
+            <span class="status-dot online"></span> Connecté
+        </p>
+    </footer>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('Service Worker enregistré!'))
+                    .catch(err => console.log('Erreur Service Worker:', err));
+            });
+        }
+    </script>
+</body>
+</html>
